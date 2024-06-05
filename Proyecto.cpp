@@ -102,6 +102,7 @@ int main() {
     set<string> E = leerExamenes(nombreArchivo);//Conjunto de nombres de los alumnos
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
     string D;//Bloques por dia
+    vector<int> W = {16, 8, 4, 2, 1, 0};
 
     // for (const auto& estudiante : E) {
     //     cout << estudiante << endl;
