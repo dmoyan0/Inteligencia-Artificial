@@ -57,8 +57,9 @@ vector<vector<int>> crearMatrizConflictos(const string& nombreArchivo) {
 
 //Main
 int main() {
-    //Constantes
     string nombreArchivo = "./Carleton91.stu";
+    //Constantes
+    //Matriz de conflictos
     vector<vector<int>> matrizConflictos = crearMatrizConflictos(nombreArchivo);
 
     // Imprimir la matriz de conflictos
