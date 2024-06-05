@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <set>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -90,6 +91,22 @@ set<string> leerExamenes(const string& nombreArchivo) {
     return examenes;
 }
 
+map<string, int> countExams(const string& nombreArchivo) {
+    map<string, int> examCounts;
+    ifstream file(nombreArchivo);
+    string estudiante, examen;
+
+    while (file >> estudiante >> examen) {
+        if (examCounts.find(examen)!= examCounts.end()) {
+            examCounts[examen]++;
+        } else {
+            examCounts[examen] = 1;
+        }
+    }
+    file.close();
+    return examCounts;
+}
+
 //Main
 int main() {
     string nombreArchivo = "./Carleton91.stu";
@@ -99,10 +116,18 @@ int main() {
     vector<vector<int>> matrizConflictos = crearMatrizConflictos(nombreArchivo);//C 
     int N = UINTMAX_MAX;//Numero muy grande
     set<string> A = leerEstudiantes(nombreArchivo);//Conjunto de nombres de los alumnos
-    set<string> E = leerExamenes(nombreArchivo);//Conjunto de nombres de los alumnos
+    set<string> E = leerExamenes(nombreArchivo);//Conjunto de nombres de los alumnos, cada indice corresponde a la sala del examen
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
     string D;//Bloques por dia
     vector<int> W = {16, 8, 4, 2, 1, 0};
+    int S = 30;//Capacidad de las salas
+
+    //Variables
+    map<string, int> examCounts = countExams(nombreArchivo);
+    for (const auto& pair : examCounts) {
+        cout << "Examen " << pair.first << ": " << pair.second << " alumnos" << endl;
+    }
+
 
     // for (const auto& estudiante : E) {
     //     cout << estudiante << endl;
