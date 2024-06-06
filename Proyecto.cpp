@@ -159,7 +159,7 @@ int main() {
     int S = 30;//Capacidad de las salas
 
     //Variables
-    map<string, vector<Sala>> examSala = countExams(nombreArchivo);
+    map<string, vector<Sala>> examSala = countExams(nombreArchivo);//Salas y capacidad que utilizan los examen
 
     // for (const auto& pair : examSala) {
     //     string examen = pair.first;
