@@ -9,6 +9,14 @@
 
 using namespace std;
 
+struct Sala {
+    int idSala;
+
+    int capacidad;
+
+    int ocupacion;
+
+};
 //Funciones
 // Función para crear la matriz de conflictos
 vector<vector<int>> crearMatrizConflictos(const string& nombreArchivo) {
@@ -90,8 +98,8 @@ set<string> leerExamenes(const string& nombreArchivo) {
 
     return examenes;
 }
-
-map<string, int> countExams(const string& nombreArchivo) {
+//Funcion que reparte los estudiantes entre las salas necesarias
+map<string, vector<Sala>> countExams(const string& nombreArchivo) {
     map<string, int> examCounts;
     ifstream file(nombreArchivo);
     string estudiante, examen;
@@ -104,7 +112,35 @@ map<string, int> countExams(const string& nombreArchivo) {
         }
     }
     file.close();
-    return examCounts;
+    
+    map<string, vector<Sala>> examSala;
+
+    int salaid = 0;
+    for (const auto& pair : examCounts) {
+        string examen = pair.first;
+        int cantidadEstudiantes = pair.second;
+        int salasNecesarias = (cantidadEstudiantes + 29) / 30; // Redondeo hacia arriba
+        vector<Sala> salas;
+
+        for (int i = 0; i < salasNecesarias; i++) {
+            Sala sala;
+            sala.idSala = salaid;
+            sala.capacidad = 30;
+            int ocupacion;
+            if (cantidadEstudiantes >= 30) {
+                ocupacion = 30;
+                cantidadEstudiantes = cantidadEstudiantes - 30;
+            } else {
+                ocupacion = cantidadEstudiantes;
+            }
+            sala.ocupacion = ocupacion;
+            salas.push_back(sala);
+            salaid++;
+        }
+        examSala[examen] = salas;
+    }
+
+    return examSala;
 }
 
 //Main
@@ -114,7 +150,7 @@ int main() {
     //Constantes
     //Matriz de conflictos
     vector<vector<int>> matrizConflictos = crearMatrizConflictos(nombreArchivo);//C 
-    int N = UINTMAX_MAX;//Numero muy grande
+    //int N = UINTMAX_MAX;//Numero muy grande
     set<string> A = leerEstudiantes(nombreArchivo);//Conjunto de nombres de los alumnos
     set<string> E = leerExamenes(nombreArchivo);//Conjunto de nombres de los alumnos, cada indice corresponde a la sala del examen
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
@@ -123,11 +159,16 @@ int main() {
     int S = 30;//Capacidad de las salas
 
     //Variables
-    map<string, int> examCounts = countExams(nombreArchivo);
-    for (const auto& pair : examCounts) {
-        cout << "Examen " << pair.first << ": " << pair.second << " alumnos" << endl;
-    }
+    map<string, vector<Sala>> examSala = countExams(nombreArchivo);
 
+    // for (const auto& pair : examSala) {
+    //     string examen = pair.first;
+    //     vector<Sala> salas = pair.second;
+    //     cout << "Examen " << examen << ": " << endl;
+    //     for (const auto& sala : salas) {
+    //         cout << "Sala " << sala.idSala << " con capacidad " << sala.capacidad  << " y ocupacion total de: " << sala.ocupacion << endl;
+    //     }
+    // }
 
     // for (const auto& estudiante : E) {
     //     cout << estudiante << endl;
