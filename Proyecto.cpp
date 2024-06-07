@@ -210,6 +210,44 @@ map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, co
 
     return asignacion;
 }
+// Función para calcular la penalización total
+int calcularPenalizacionTotal(const string& archivoEstudiantes, const map<string, int>& asignacion, const vector<int>& W) {
+    ifstream archivo(archivoEstudiantes);
+    if (!archivo.is_open()) {
+        cerr << "No se pudo abrir el archivo de estudiantes." << endl;
+        exit(1);
+    }
+
+    unordered_map<string, vector<int>> examenesPorEstudiante;
+    string idEstudiante, idExamen;
+
+    // Leer el archivo y almacenar en el map
+    while (archivo >> idEstudiante >> idExamen) {
+        examenesPorEstudiante[idEstudiante].push_back(asignacion.at(idExamen));
+    }
+    archivo.close();
+
+    int penalizacionTotal = 0;
+
+    // Calcular la penalización para cada estudiante
+    for (const auto& entry : examenesPorEstudiante) {
+        vector<int> horarios = entry.second;
+        sort(horarios.begin(), horarios.end());
+
+        for (size_t i = 0; i < horarios.size(); ++i) {
+            for (size_t j = i + 1; j < horarios.size(); ++j) {
+                int diferencia = horarios[j] - horarios[i];
+                if (diferencia <= 5) {
+                    penalizacionTotal += W[diferencia - 1];
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    return penalizacionTotal;
+}
 //Main
 int main() {
     string archivoEstudiantes = "./Carleton91.stu";
@@ -251,17 +289,38 @@ int main() {
     //     }
     //     cout << endl;
     // }
-
+    int timeSlotsReq = 0;
     ofstream archivo("./Carleton91.sol");
     if (archivo.is_open()){
         for (const auto& [examen, timeSlot] : asignacion){
             archivo << examen << " " << timeSlot << endl;
+            if (timeSlot > timeSlotsReq)
+            {
+                timeSlotsReq = timeSlot;
+            }
         }
         archivo.close();
     } else {
         cerr << "Error al abrir el archivo " << "Carleton91.sol" << endl;
     }
 
+    int penalizacionTotal = calcularPenalizacionTotal(archivoEstudiantes, asignacion, W);
+
+    ofstream file("./Carleton91.pen");
+    if (file.is_open()){
+        file << penalizacionTotal << endl;
+        file.close();
+    } else {
+        cerr << "Error al abrir el archivo " << "Carleton91.pen" << endl;
+    }
+
+    ofstream res("./Carleton91.res");
+    if (res.is_open()){
+        res << timeSlotsReq << endl;
+        res.close();
+    } else {
+        cerr << "Error al abrir el archivo " << "Carleton91.res" << endl;
+    }
     return 0;
 
 }
