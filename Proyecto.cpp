@@ -145,21 +145,22 @@ map<string, vector<Sala>> countExams(const string& nombreArchivo) {
 
 //Main
 int main() {
-    string nombreArchivo = "./Carleton91.stu";
-    
+    string archivoEstudiantes = "./Carleton91.stu";
+    string archivoExamenes = "./Carleton91.exm";
+
     //Constantes
     //Matriz de conflictos
-    vector<vector<int>> matrizConflictos = crearMatrizConflictos(nombreArchivo);//C 
+    vector<vector<int>> matrizConflictos = crearMatrizConflictos(archivoEstudiantes);//C 
     //int N = UINTMAX_MAX;//Numero muy grande
-    set<string> A = leerEstudiantes(nombreArchivo);//Conjunto de nombres de los alumnos
-    set<string> E = leerExamenes(nombreArchivo);//Conjunto de nombres de los alumnos, cada indice corresponde a la sala del examen
+    set<string> A = leerEstudiantes(archivoEstudiantes);//Conjunto de nombres de los alumnos
+    set<string> E = leerExamenes(archivoEstudiantes);//Conjunto de nombres de los alumnos, cada indice corresponde a la sala del examen
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
     string D;//Bloques por dia
     vector<int> W = {16, 8, 4, 2, 1, 0};
     int S = 30;//Capacidad de las salas
 
     //Variables
-    map<string, vector<Sala>> examSala = countExams(nombreArchivo);//Salas y capacidad que utilizan los examen
+    map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
 
     // for (const auto& pair : examSala) {
     //     string examen = pair.first;
@@ -170,9 +171,9 @@ int main() {
     //     }
     // }
 
-    // for (const auto& estudiante : E) {
-    //     cout << estudiante << endl;
-    // }
+    for (const auto& estudiante : E) {
+        cout << estudiante << endl;
+    }
     // // Imprimir la matriz de conflictos
     // cout << "Matriz de Conflictos:" << endl;
     // for (size_t i = 0; i < matrizConflictos.size(); ++i) {
