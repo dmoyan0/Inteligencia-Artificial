@@ -20,17 +20,16 @@ struct Sala {
 };
 //Funciones
 // Función para crear la matriz de conflictos
-vector<vector<int>> crearMatrizConflictos(const string& nombreArchivo) {
+vector<vector<int>> crearMatrizConflictos(const string& nombreArchivo, vector<string>& examenesList) {
     ifstream archivo;
-    archivo.open(nombreArchivo,ios::in);
+    archivo.open(nombreArchivo, ios::in);
     if (!archivo.is_open()) {
         cerr << "No se pudo abrir el archivo." << endl;
         exit(1);
     }
 
-    unordered_map<string, set<int>> examenesPorEstudiante;
-    string idEstudiante; 
-    int idExamen;
+    unordered_map<string, set<string>> examenesPorEstudiante;
+    string idEstudiante, idExamen;
     
     // Leer el archivo y almacenar en el map
     while (archivo >> idEstudiante >> idExamen) {
@@ -38,31 +37,42 @@ vector<vector<int>> crearMatrizConflictos(const string& nombreArchivo) {
     }
     archivo.close();
 
-    // Encontrar el número máximo de examen para definir el tamaño de la matriz
-    int maxExamen = 0;
+    // Encontrar todos los exámenes únicos
+    set<string> examenesUnicos;
     for (const auto& entry : examenesPorEstudiante) {
-        for (int examen : entry.second) {
-            if (examen > maxExamen) {
-                maxExamen = examen;
-            }
+        for (const auto& examen : entry.second) {
+            examenesUnicos.insert(examen);
         }
     }
-    // Crear una matriz cuadrada de tamaño (maxExamen+1) x (maxExamen+1) inicializada en 0
-    vector<vector<int>> matrizConflictos(maxExamen + 1, vector<int>(maxExamen + 1, 0));
+
+    // Crear lista de exámenes
+    examenesList.assign(examenesUnicos.begin(), examenesUnicos.end());
+
+    // Mapear cada examen a un índice
+    unordered_map<string, int> examenToIndex;
+    for (size_t i = 0; i < examenesList.size(); ++i) {
+        examenToIndex[examenesList[i]] = i;
+    }
+
+    // Crear una matriz cuadrada de tamaño examenesList.size() x examenesList.size() inicializada en 0
+    vector<vector<int>> matrizConflictos(examenesList.size(), vector<int>(examenesList.size(), 0));
  
     // Llenar la matriz de conflictos
     for (const auto& entry : examenesPorEstudiante) {
-        const set<int>& examenes = entry.second;
+        const set<string>& examenes = entry.second;
         for (auto it1 = examenes.begin(); it1 != examenes.end(); ++it1) {
             for (auto it2 = next(it1); it2 != examenes.end(); ++it2) {
-                matrizConflictos[*it1][*it2] = 1;
-                matrizConflictos[*it2][*it1] = 1;
+                int idx1 = examenToIndex[*it1];
+                int idx2 = examenToIndex[*it2];
+                matrizConflictos[idx1][idx2] = 1;
+                matrizConflictos[idx2][idx1] = 1;
             }
         }
     }
 
     return matrizConflictos;
 }
+
 //Funcion para extraer todos los estudiantes
 set<string> leerEstudiantes(const string& nombreArchivo) {
     ifstream archivo(nombreArchivo);
@@ -144,12 +154,13 @@ map<string, vector<Sala>> countExams(const string& nombreArchivo) {
     return examSala;
 }
 //Funcion para leer los examenes
-map<int, int> cantExamenes(const string& nombreArchivo) {
+map<string, int> cantExamenes(const string& nombreArchivo) {
     ifstream archivo(nombreArchivo);
-    map<int, int> examenes;
+    map<string, int> examenes;
 
     if (archivo.is_open()) {
-        int idExamen, cant;
+        string idExamen;
+        int cant;
         while (archivo >> idExamen >> cant) {
             examenes[idExamen] = cant;
         }
@@ -161,28 +172,29 @@ map<int, int> cantExamenes(const string& nombreArchivo) {
     return examenes;
 }
 //GREEDY
-map<int, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, const map<int, int>& examenes) {
-    vector<int> exámenesOrdenados;
-    for (const auto& [idExamen, _] : examenes) {
-        exámenesOrdenados.push_back(idExamen);
-    }
+map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, const map<string, int>& examenes, const vector<string>& examenesList) {
+    vector<string> exámenesOrdenados = examenesList;
 
     // Ordenar los exámenes por el número de conflictos (grado)
-    sort(exámenesOrdenados.begin(), exámenesOrdenados.end(), [&matrizConflictos](int a, int b) {
-        int gradoA = count(matrizConflictos[a].begin(), matrizConflictos[a].end(), 1);
-        int gradoB = count(matrizConflictos[b].begin(), matrizConflictos[b].end(), 1);
+    sort(exámenesOrdenados.begin(), exámenesOrdenados.end(), [&matrizConflictos, &examenesList](const string& a, const string& b) {
+        int idxA = find(examenesList.begin(), examenesList.end(), a) - examenesList.begin();
+        int idxB = find(examenesList.begin(), examenesList.end(), b) - examenesList.begin();
+        int gradoA = count(matrizConflictos[idxA].begin(), matrizConflictos[idxA].end(), 1);
+        int gradoB = count(matrizConflictos[idxB].begin(), matrizConflictos[idxB].end(), 1);
         return gradoA > gradoB;
     });
 
-    map<int, int> asignacion; // examen -> time-slot
+    map<string, int> asignacion; // examen -> time-slot
     int timeSlot = 0;
 
-    for (int examen : exámenesOrdenados) {
+    for (const string& examen : exámenesOrdenados) {
         bool asignado = false;
         while (!asignado) {
             bool conflicto = false;
             for (const auto& [examenAsignado, ts] : asignacion) {
-                if (ts == timeSlot && matrizConflictos[examen][examenAsignado] == 1) {
+                int idxExamen = find(examenesList.begin(), examenesList.end(), examen) - examenesList.begin();
+                int idxExamenAsignado = find(examenesList.begin(), examenesList.end(), examenAsignado) - examenesList.begin();
+                if (ts == timeSlot && matrizConflictos[idxExamen][idxExamenAsignado] == 1) {
                     conflicto = true;
                     break;
                 }
@@ -205,10 +217,11 @@ int main() {
 
     //Constantes
     //Matriz de conflictos
-    vector<vector<int>> matrizConflictos = crearMatrizConflictos(archivoEstudiantes);//C 
+    vector<string> examenesList;
+    vector<vector<int>> matrizConflictos = crearMatrizConflictos(archivoEstudiantes, examenesList);//C 
     set<string> A = leerEstudiantes(archivoEstudiantes);//Conjunto de nombres de los alumnos
     set<string> E = leerExamenes(archivoEstudiantes);//Conjunto de nombres de los Examenes
-    map<int, int> examenes = cantExamenes(archivoExamenes);//Leer los examenes y sus cantidades
+    map<string, int> examenes = cantExamenes(archivoExamenes);//Leer los examenes y sus cantidades
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
     string D;//Bloques por dia
     vector<int> W = {16, 8, 4, 2, 1, 0};
@@ -217,7 +230,7 @@ int main() {
     //Variables
     map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
 
-    map<int, int> asignacion = greedyScheduler(matrizConflictos, examenes);
+    map<string, int> asignacion = greedyScheduler(matrizConflictos, examenes, examenesList);
     // for (const auto& pair : examSala) {
     //     string examen = pair.first;
     //     vector<Sala> salas = pair.second;
