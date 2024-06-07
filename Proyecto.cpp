@@ -248,6 +248,10 @@ int calcularPenalizacionTotal(const string& archivoEstudiantes, const map<string
 
     return penalizacionTotal;
 }
+//Funcion de evaluacion
+int funcionEvaluacion(int penalizacion, int cantidadBloques) {
+    return penalizacion * cantidadBloques;
+}
 //Main
 int main() {
     string archivoEstudiantes = "./Carleton91.stu";
@@ -263,7 +267,6 @@ int main() {
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
     string D;//Bloques por dia
     vector<int> W = {16, 8, 4, 2, 1, 0};
-    int S = 30;//Capacidad de las salas
 
     //Variables
     map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
@@ -321,6 +324,8 @@ int main() {
     } else {
         cerr << "Error al abrir el archivo " << "Carleton91.res" << endl;
     }
+    int calidad = funcionEvaluacion(penalizacionTotal, timeSlotsReq);
+    cout << "Calidad: " << calidad << endl;
     return 0;
 
 }
