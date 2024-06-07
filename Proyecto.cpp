@@ -171,8 +171,8 @@ map<string, int> cantExamenes(const string& nombreArchivo) {
 
     return examenes;
 }
-//GREEDY
-map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, const map<string, int>& examenes, const vector<string>& examenesList) {
+// Función greedy para asignar exámenes a time-slots
+map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, const map<string, int>& examenes, const vector<string>& examenesList, int D) {
     vector<string> exámenesOrdenados = examenesList;
 
     // Ordenar los exámenes por el número de conflictos (grado)
@@ -186,6 +186,7 @@ map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, co
 
     map<string, int> asignacion; // examen -> time-slot
     int timeSlot = 0;
+    int currentDay = 0;
 
     for (const string& examen : exámenesOrdenados) {
         bool asignado = false;
@@ -199,11 +200,14 @@ map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, co
                     break;
                 }
             }
-            if (!conflicto) {
+            if (!conflicto && (timeSlot / D == currentDay)) {
                 asignacion[examen] = timeSlot;
                 asignado = true;
             } else {
                 timeSlot++;
+                if (timeSlot % D == 0) {
+                    currentDay++;
+                }
             }
         }
     }
@@ -248,9 +252,10 @@ int calcularPenalizacionTotal(const string& archivoEstudiantes, const map<string
 
     return penalizacionTotal;
 }
+
 //Funcion de evaluacion
 int funcionEvaluacion(int penalizacion, int cantidadBloques) {
-    return penalizacion * cantidadBloques;
+    return 0.5*penalizacion + cantidadBloques;
 }
 //Main
 int main() {
@@ -265,33 +270,12 @@ int main() {
     set<string> E = leerExamenes(archivoEstudiantes);//Conjunto de nombres de los Examenes
     map<string, int> examenes = cantExamenes(archivoExamenes);//Leer los examenes y sus cantidades
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
-    string D;//Bloques por dia
+    int D = 10;//Bloques por dia
     vector<int> W = {16, 8, 4, 2, 1, 0};
 
     //Variables
     map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
-
-    map<string, int> asignacion = greedyScheduler(matrizConflictos, examenes, examenesList);
-    // for (const auto& pair : examSala) {
-    //     string examen = pair.first;
-    //     vector<Sala> salas = pair.second;
-    //     cout << "Examen " << examen << ": " << endl;
-    //     for (const auto& sala : salas) {
-    //         cout << "Sala " << sala.idSala << " con capacidad " << sala.capacidad  << " y ocupacion total de: " << sala.ocupacion << endl;
-    //     }
-    // }
-
-    //for (const auto& estudiante : E) {
-    //    cout << estudiante << endl;
-    //}
-    // // Imprimir la matriz de conflictos
-    // cout << "Matriz de Conflictos:" << endl;
-    // for (size_t i = 0; i < matrizConflictos.size(); ++i) {
-    //     for (size_t j = 0; j < matrizConflictos[i].size(); ++j) {
-    //         cout << matrizConflictos[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
+    map<string, int> asignacion = greedyScheduler(matrizConflictos, examenes, examenesList, D);
     int timeSlotsReq = 0;
     ofstream archivo("./Carleton91.sol");
     if (archivo.is_open()){
