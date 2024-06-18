@@ -283,8 +283,8 @@ bool esSolucionValida(const map<string, int>& solucion, const vector<vector<int>
 map<string, int> hillClimbingFirstImprovement(map<string, int> solucionInicial, const map<string, set<string>>& examenesPorEstudiante, const vector<int>& W, const vector<vector<int>>& matrizConflictos, const vector<string>& examenesList) {
     map<string, int> mejorSolucion = solucionInicial;
     int penalizacion = calcularPenalizacion(mejorSolucion, examenesPorEstudiante, W); 
-    int mejorCalidad = funcionEvaluacion(penalizacion, mejorSolucion.size());
-    cout << "mejor calidad inicial: " << mejorCalidad << endl;
+    int CalidadInicial = funcionEvaluacion(penalizacion, mejorSolucion.size());
+    cout << "mejor calidad inicial: " << CalidadInicial << endl;
 
     bool mejoraEncontrada = true;
 
@@ -304,11 +304,11 @@ map<string, int> hillClimbingFirstImprovement(map<string, int> solucionInicial, 
                 int nuevaPenalizacion = calcularPenalizacion(nuevaSolucion, examenesPorEstudiante, W);
                 int nuevaCalidad = funcionEvaluacion(nuevaPenalizacion, nuevaSolucion.size());
                 cout << "Nueva calidad: " << nuevaCalidad << endl;
-                if (nuevaCalidad < mejorCalidad) {
+                if (nuevaCalidad < CalidadInicial) {
                     mejorSolucion = nuevaSolucion;
-                    mejorCalidad = nuevaCalidad;
                     mejoraEncontrada = true;
-                    break;
+                    cout << "ENCONTRE" << endl;
+                    return mejorSolucion;
                 }
             }
             if (mejoraEncontrada) break;
@@ -422,6 +422,7 @@ int main() {
     }
     archivoStu.close();
     
+    //Falta definir iteraciones del HCAM
     map<string, int> mejorSolucion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
     int mejorPenalizacion = calcularPenalizacionTotal(archivoEstudiantes, mejorSolucion, W);
     int mejorCalidad = funcionEvaluacion(mejorPenalizacion, timeSlotsReq);
