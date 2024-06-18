@@ -318,50 +318,11 @@ map<string, int> hillClimbingFirstImprovement(map<string, int> solucionInicial, 
     return mejorSolucion;
 }
 
-// Función para calcular la penalización total
-int calcularPenalizacionTotal(const string& archivoEstudiantes, const map<string, int>& asignacion, const vector<int>& W) {
-    ifstream archivo(archivoEstudiantes);
-    if (!archivo.is_open()) {
-        cerr << "No se pudo abrir el archivo de estudiantes." << endl;
-        exit(1);
-    }
-
-    unordered_map<string, vector<int>> examenesPorEstudiante;
-    string idEstudiante, idExamen;
-
-    // Leer el archivo y almacenar en el map
-    while (archivo >> idEstudiante >> idExamen) {
-        examenesPorEstudiante[idEstudiante].push_back(asignacion.at(idExamen));
-    }
-    archivo.close();
-
-    int penalizacionTotal = 0;
-
-    // Calcular la penalización para cada estudiante
-    for (const auto& entry : examenesPorEstudiante) {
-        vector<int> horarios = entry.second;
-        sort(horarios.begin(), horarios.end());
-
-        for (size_t i = 0; i < horarios.size(); ++i) {
-            for (size_t j = i + 1; j < horarios.size(); ++j) {
-                int diferencia = horarios[j] - horarios[i];
-                if (diferencia <= 5) {
-                    penalizacionTotal += W[diferencia - 1];
-                } else {
-                    break;
-                }
-            }
-        }
-    }
-
-    return penalizacionTotal;
-}
-
-
 //Main
 int main() {
     string archivoEstudiantes = "./Carleton91.stu";
     string archivoExamenes = "./Carleton91.exm";
+    ifstream archivoStu(archivoEstudiantes);
 
     //Constantes
     //Matriz de conflictos
@@ -373,6 +334,14 @@ int main() {
     string T;//Cantidad de bloques en los que se deben realizar los exámenes
     int D = 10;//Bloques por dia
     vector<int> W = {16, 8, 4, 2, 1, 0};
+    map<string, set<string>> examenesPorEstudiante;
+    string idEstudiante, idExamen;
+    while (archivoStu >> idEstudiante >> idExamen)
+    {
+        examenesPorEstudiante[idEstudiante].insert(idExamen);
+    }
+    archivoStu.close();
+
 
     //Variables
     map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
@@ -392,7 +361,7 @@ int main() {
         cerr << "Error al abrir el archivo " << "Carleton91.sol" << endl;
     }
 
-    int penalizacionTotal = calcularPenalizacionTotal(archivoEstudiantes, asignacion, W);
+    int penalizacionTotal = calcularPenalizacion(asignacion, examenesPorEstudiante, W);
 
     ofstream file("./Carleton91.pen");
     if (file.is_open()){
@@ -409,23 +378,13 @@ int main() {
     } else {
         cerr << "Error al abrir el archivo " << "Carleton91.res" << endl;
     }
-    int calidad = funcionEvaluacion(penalizacionTotal, timeSlotsReq);
-    cout << "Calidad Greedy: " << calidad << endl;
-    
-    // Aplicar Hillclimbing
-    map<string, set<string>> examenesPorEstudiante;
-    ifstream archivoStu(archivoEstudiantes);
-    string idEstudiante, idExamen;
-    while (archivoStu >> idEstudiante >> idExamen)
-    {
-        examenesPorEstudiante[idEstudiante].insert(idExamen);
-    }
-    archivoStu.close();
+    int calidad = funcionEvaluacion(penalizacionTotal, asignacion.size());
+    cout << "Calidad Greedy: " << calidad << endl;  
     
     //Falta definir iteraciones del HCAM
     map<string, int> mejorSolucion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
-    int mejorPenalizacion = calcularPenalizacionTotal(archivoEstudiantes, mejorSolucion, W);
-    int mejorCalidad = funcionEvaluacion(mejorPenalizacion, timeSlotsReq);
+    int mejorPenalizacion = calcularPenalizacion(mejorSolucion, examenesPorEstudiante, W);
+    int mejorCalidad = funcionEvaluacion(mejorPenalizacion, mejorSolucion.size());
 
 
     cout << "Calidad Hill Climbing: " << mejorCalidad << endl;
