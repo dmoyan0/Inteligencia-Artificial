@@ -171,6 +171,12 @@ map<string, int> cantExamenes(const string& nombreArchivo) {
 
     return examenes;
 }
+
+//Funcion de evaluacion
+int funcionEvaluacion(int penalizacion, int cantidadBloques) {
+    return 0.5*penalizacion + cantidadBloques;
+}
+
 // Función greedy para asignar exámenes a time-slots
 map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, const map<string, int>& examenes, const vector<string>& examenesList, int D) {
     vector<string> exámenesOrdenados = examenesList;
@@ -214,6 +220,104 @@ map<string, int> greedyScheduler(const vector<vector<int>>& matrizConflictos, co
 
     return asignacion;
 }
+
+// Función para calcular la penalización total
+int calcularPenalizacion(const map<string, int>& solucion, const map<string, set<string>>& examenesPorEstudiante, const vector<int>& W) {
+    int penalizacionTotal = 0;
+
+    // Calcular la penalización para cada estudiante
+    for (const auto& entry : examenesPorEstudiante) {
+        vector<int> horarios;
+        for (const auto& examen : entry.second) {
+            horarios.push_back(solucion.at(examen));
+        }
+        sort(horarios.begin(), horarios.end());
+
+        for (size_t i = 0; i < horarios.size(); ++i) {
+            for (size_t j = i + 1; j < horarios.size(); ++j) {
+                int diferencia = horarios[j] - horarios[i];
+                if (diferencia <= 5) {
+                    penalizacionTotal += W[diferencia - 1];
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    return penalizacionTotal;
+}
+
+
+string encontrarExamenPorIndice(const map<string, int>& solucion, int indice) {
+    auto it = solucion.begin();
+    advance(it, indice);
+    return it->first;
+}
+
+//Swap
+void swapTimeSlots(map<string, int>& asignacion, int i, int j) {
+    string Examen1 = encontrarExamenPorIndice(asignacion, i);
+    string Examen2 = encontrarExamenPorIndice(asignacion, j);
+
+    swap(asignacion[Examen1], asignacion[Examen2]);
+}
+
+// Función para verificar si una solución es válida según la matriz de conflictos
+bool esSolucionValida(const map<string, int>& solucion, const vector<vector<int>>& matrizConflictos, const vector<string>& examenesList) {
+    for (const auto& [examen1, timeSlot1] : solucion) {
+        for (const auto& [examen2, timeSlot2] : solucion) {
+            if (timeSlot1 == timeSlot2) {
+                int idxExamen1 = find(examenesList.begin(), examenesList.end(), examen1) - examenesList.begin();
+                int idxExamen2 = find(examenesList.begin(), examenesList.end(), examen2) - examenesList.begin();
+                if (matrizConflictos[idxExamen1][idxExamen2] == 1) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// HillClimbing
+map<string, int> hillClimbingFirstImprovement(map<string, int> solucionInicial, const map<string, set<string>>& examenesPorEstudiante, const vector<int>& W, const vector<vector<int>>& matrizConflictos, const vector<string>& examenesList) {
+    map<string, int> mejorSolucion = solucionInicial;
+    int penalizacion = calcularPenalizacion(mejorSolucion, examenesPorEstudiante, W); 
+    int mejorCalidad = funcionEvaluacion(penalizacion, mejorSolucion.size());
+    cout << "mejor calidad inicial: " << mejorCalidad << endl;
+
+    bool mejoraEncontrada = true;
+
+    while (mejoraEncontrada) {
+        mejoraEncontrada = false;
+
+        for (size_t i = 0; i < mejorSolucion.size(); ++i) {
+            for (size_t j = i + 1; j < mejorSolucion.size(); ++j) {
+                map<string, int> nuevaSolucion = mejorSolucion;
+                swapTimeSlots(nuevaSolucion, i, j);
+
+                // Verificar si la nueva solución es válida
+                if (!esSolucionValida(nuevaSolucion, matrizConflictos, examenesList)) {
+                    continue;
+                }
+
+                int nuevaPenalizacion = calcularPenalizacion(nuevaSolucion, examenesPorEstudiante, W);
+                int nuevaCalidad = funcionEvaluacion(nuevaPenalizacion, nuevaSolucion.size());
+                cout << "Nueva calidad: " << nuevaCalidad << endl;
+                if (nuevaCalidad < mejorCalidad) {
+                    mejorSolucion = nuevaSolucion;
+                    mejorCalidad = nuevaCalidad;
+                    mejoraEncontrada = true;
+                    break;
+                }
+            }
+            if (mejoraEncontrada) break;
+        }
+    }
+
+    return mejorSolucion;
+}
+
 // Función para calcular la penalización total
 int calcularPenalizacionTotal(const string& archivoEstudiantes, const map<string, int>& asignacion, const vector<int>& W) {
     ifstream archivo(archivoEstudiantes);
@@ -253,10 +357,7 @@ int calcularPenalizacionTotal(const string& archivoEstudiantes, const map<string
     return penalizacionTotal;
 }
 
-//Funcion de evaluacion
-int funcionEvaluacion(int penalizacion, int cantidadBloques) {
-    return 0.5*penalizacion + cantidadBloques;
-}
+
 //Main
 int main() {
     string archivoEstudiantes = "./Carleton91.stu";
@@ -309,7 +410,24 @@ int main() {
         cerr << "Error al abrir el archivo " << "Carleton91.res" << endl;
     }
     int calidad = funcionEvaluacion(penalizacionTotal, timeSlotsReq);
-    cout << "Calidad: " << calidad << endl;
+    cout << "Calidad Greedy: " << calidad << endl;
+    
+    // Aplicar Hillclimbing
+    map<string, set<string>> examenesPorEstudiante;
+    ifstream archivoStu(archivoEstudiantes);
+    string idEstudiante, idExamen;
+    while (archivoStu >> idEstudiante >> idExamen)
+    {
+        examenesPorEstudiante[idEstudiante].insert(idExamen);
+    }
+    archivoStu.close();
+    
+    map<string, int> mejorSolucion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
+    int mejorPenalizacion = calcularPenalizacionTotal(archivoEstudiantes, mejorSolucion, W);
+    int mejorCalidad = funcionEvaluacion(mejorPenalizacion, timeSlotsReq);
+
+
+    cout << "Calidad Hill Climbing: " << mejorCalidad << endl;
     return 0;
 
 }
