@@ -174,7 +174,7 @@ map<string, int> cantExamenes(const string& nombreArchivo) {
 
 //Funcion de evaluacion
 int funcionEvaluacion(int penalizacion, int cantidadBloques) {
-    return 0.5*penalizacion + cantidadBloques;
+    return penalizacion + cantidadBloques;
 }
 
 // Función greedy para asignar exámenes a time-slots
