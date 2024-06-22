@@ -320,9 +320,9 @@ map<string, int> hillClimbingFirstImprovement(map<string, int> solucionInicial, 
 
 //Main
 int main() {
-    string file = "St.Andrews83";
-    string archivoEstudiantes = file + ".stu";
-    string archivoExamenes = "./St.Andrews83.exm";
+    string nombre = "St.Andrews83";
+    string archivoEstudiantes = nombre + ".stu";
+    string archivoExamenes = nombre + ".exm";
     ifstream archivoStu(archivoEstudiantes);
 
     //Constantes
@@ -348,7 +348,7 @@ int main() {
     map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
     map<string, int> asignacion = greedyScheduler(matrizConflictos, examenes, examenesList, D);
     int timeSlotsReq = 0;
-    ofstream archivo("./Greedy.sol");
+    ofstream archivo(nombre + "Greedy.sol");
     if (archivo.is_open()){
         for (const auto& [examen, timeSlot] : asignacion){
             archivo << examen << " " << timeSlot << endl;
@@ -358,48 +358,103 @@ int main() {
                 timeSlotsReq = timeSlot;
             }
         }
-        archivo.close();
     } else {
-        cerr << "Error al abrir el archivo " << "Carleton91.sol" << endl;
+        cerr << "Error al abrir el archivo " << nombre + ".sol" << endl;
     }
+    archivo.close();
 
     int penalizacionTotal = calcularPenalizacion(asignacion, examenesPorEstudiante, W);
 
-    ofstream file("./Carleton91.pen");
+    ofstream file(nombre + "Greedy.pen");
     if (file.is_open()){
         file << penalizacionTotal << endl;
         file.close();
     } else {
-        cerr << "Error al abrir el archivo " << "Carleton91.pen" << endl;
+        cerr << "Error al abrir el archivo " << nombre + ".pen" << endl;
     }
+    file.close();
 
-    ofstream res("./Carleton91.res");
+    ofstream res(nombre + ".res");
     if (res.is_open()){
         res << timeSlotsReq << endl;
         res.close();
     } else {
-        cerr << "Error al abrir el archivo " << "Carleton91.res" << endl;
+        cerr << "Error al abrir el archivo " << nombre + ".res" << endl;
     }
+    res.close();
     int calidad = funcionEvaluacion(penalizacionTotal, asignacion.size());
     cout << "Calidad Greedy: " << calidad << endl;  
     
+    set<int> bloques_unicos_greedy;
+
+    for (const auto& examen: asignacion)
+    {
+        bloques_unicos_greedy.insert(examen.second);
+    }
+
     //Falta definir iteraciones del HCAM
-    map<string, int> mejorSolucion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
-    int mejorPenalizacion = calcularPenalizacion(mejorSolucion, examenesPorEstudiante, W);
-    int mejorCalidad = funcionEvaluacion(mejorPenalizacion, mejorSolucion.size());
+    // map<string, int> mejorSolucion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
+    cout << "ingrese las iteraciones:";
+    int iteraciones;
+    cin >> iteraciones;
+    for (int i = 0; i < iteraciones; i++){
+        int pen = calcularPenalizacion(asignacion)
+        asignacion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
+        if (pen = calcularPenalizacion(asignacion))
+        {
+            break;
+        }
+        
+    }
+    cout << "Número de iteraciones: " << iteraciones << endl;
+    int mejorPenalizacion = calcularPenalizacion(asignacion, examenesPorEstudiante, W);
+    int mejorCalidad = funcionEvaluacion(mejorPenalizacion, asignacion.size());
     
     set<int> bloques_unicos;
     
-    for (const auto& examen: mejorSolucion)
+    for (const auto& examen: asignacion)
     {
         bloques_unicos.insert(examen.second);
     }
 
-    set<int> bloques_unicos_greedy;
+    ofstream archivo_hc(nombre + "_HCAM.sol");
+    if (archivo_hc.is_open()){
+        for (const auto& [examen, timeSlot] : asignacion){
+            archivo_hc << examen << " " << timeSlot << endl;
+            
+            if (timeSlot > timeSlotsReq)
+            {
+                timeSlotsReq = timeSlot;
+            }
+        }
+        archivo_hc.close();
+    } else {
+        cerr << "Error al abrir el archivo " << nombre + "_HCAM.sol" << endl;
+    }
+
+    ofstream file_hc(nombre + "_HCAM.pen");
+    if (file_hc.is_open()){
+        file_hc << mejorPenalizacion << endl;
+        file_hc.close();
+    } else {
+        cerr << "Error al abrir el archivo " << nombre + ".pen" << endl;
+    }
     
-    for (const auto& examen: asignacion)
-    {
-        bloques_unicos_greedy.insert(examen.second);
+    ofstream res_hc(nombre + "_HCAM.res");
+    if (res_hc.is_open()){
+        res_hc << timeSlotsReq << endl;
+        res_hc.close();
+    } else {
+        cerr << "Error al abrir el archivo " << nombre + ".res" << endl;
+    }
+
+    ofstream calidad_file(nombre + "_calidad.txt");
+    if (calidad_file.is_open()){
+        calidad_file << "Calidad: " << mejorCalidad << endl ;
+        calidad_file << "Numero de iteraciones: " << iteraciones << endl;
+        calidad_file.close();
+    } else {
+        cerr << "Error al abrir el archivo " << nombre + ".res" << endl;
     }
 
     cout << "Total de bloques de horario utilizados HC: " << bloques_unicos.size() << std::endl;
