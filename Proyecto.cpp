@@ -320,8 +320,9 @@ map<string, int> hillClimbingFirstImprovement(map<string, int> solucionInicial, 
 
 //Main
 int main() {
-    string archivoEstudiantes = "./Carleton91.stu";
-    string archivoExamenes = "./Carleton91.exm";
+    string file = "St.Andrews83";
+    string archivoEstudiantes = file + ".stu";
+    string archivoExamenes = "./St.Andrews83.exm";
     ifstream archivoStu(archivoEstudiantes);
 
     //Constantes
@@ -347,10 +348,11 @@ int main() {
     map<string, vector<Sala>> examSala = countExams(archivoEstudiantes);//Salas y capacidad que utilizan los examen
     map<string, int> asignacion = greedyScheduler(matrizConflictos, examenes, examenesList, D);
     int timeSlotsReq = 0;
-    ofstream archivo("./Carleton91.sol");
+    ofstream archivo("./Greedy.sol");
     if (archivo.is_open()){
         for (const auto& [examen, timeSlot] : asignacion){
             archivo << examen << " " << timeSlot << endl;
+            
             if (timeSlot > timeSlotsReq)
             {
                 timeSlotsReq = timeSlot;
@@ -385,7 +387,24 @@ int main() {
     map<string, int> mejorSolucion = hillClimbingFirstImprovement(asignacion, examenesPorEstudiante, W, matrizConflictos, examenesList);
     int mejorPenalizacion = calcularPenalizacion(mejorSolucion, examenesPorEstudiante, W);
     int mejorCalidad = funcionEvaluacion(mejorPenalizacion, mejorSolucion.size());
+    
+    set<int> bloques_unicos;
+    
+    for (const auto& examen: mejorSolucion)
+    {
+        bloques_unicos.insert(examen.second);
+    }
 
+    set<int> bloques_unicos_greedy;
+    
+    for (const auto& examen: asignacion)
+    {
+        bloques_unicos_greedy.insert(examen.second);
+    }
+
+    cout << "Total de bloques de horario utilizados HC: " << bloques_unicos.size() << std::endl;
+
+    cout << "Total de bloques de horario utilizados HC: " << bloques_unicos.size() << std::endl;
 
     cout << "Calidad Hill Climbing: " << mejorCalidad << endl;
     return 0;
